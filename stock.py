@@ -268,20 +268,51 @@ def calc_on_balance_volume(price_data):
 
 def price_change(price_data):
     # Compute price change only for 'close' column
-    price_data['Prediction'] = np.sign(price_data['close'].diff()).fillna(0)
+    price_data = price_data.dropna()
+
+    price_data['Prediction'] = np.sign(price_data['close'].diff())
 
     # Convert 0s to 1s for binary classification
     price_data.loc[price_data['Prediction'] == 0.0, 'Prediction'] = 1.0
 
+    price_data = price_data.dropna()
 
     price_data.to_csv('final_metrics.csv')
 
     return price_data
 
 
+# building the model 
+def split_data(price_data):
+    price_data = candle_plot(price_data)
+    price_data = smooth_data(price_data)
+    price_data = calc_RSI(price_data)
+    price_data = calc_stochastic_oscillator(price_data)
+    price_data = calc_williams_R(price_data)
+    price_data = calc_MACD(price_data)
+    price_data = calc_price_rate_of_change(price_data)
+    price_data = calc_on_balance_volume(price_data)
+    price_data = price_change(price_data)
 
+    X_Cols = price_data[['RSI','k_percent','r_percent','Price_Rate_Of_Change','MACD','On Balance Volume']]
+    Y_Cols = price_data['Prediction']
 
+    # Split X and y into X_
+    X_train, X_test, y_train, y_test = train_test_split(X_Cols, Y_Cols, random_state = 0)
 
+    # Create a Random Forest Classifier
+    rand_frst_clf = RandomForestClassifier(n_estimators = 100, oob_score = True, criterion = "gini", random_state = 0)
+
+    # Fit the data to the model
+    rand_frst_clf.fit(X_train, y_train)
+
+    # Make predictions
+    y_pred = rand_frst_clf.predict(X_test)
+    # Compute accuracy
+    accuracy = accuracy_score(y_test, rand_frst_clf.predict(X_test), normalize = True) * 100.0
+
+    # Return the accuracy as a string
+    return f'Correct Prediction (%): {accuracy:.2f}'
 
 
 
@@ -307,4 +338,5 @@ if st.button('Show Plots'):
     # Iterate over the selected stocks
     for stock in selected_stocks[:num_company]:
         price_plot(stock)
-        st.dataframe(price_change(calc_on_balance_volume(calc_price_rate_of_change(calc_MACD(calc_williams_R(calc_stochastic_oscillator(calc_RSI(smooth_data(candle_plot(stock))))))))))
+        result = split_data(stock)  # Call the function and store the result
+        st.markdown(result)
