@@ -2,9 +2,8 @@
 
 A sophisticated web application that analyzes S&P 500 stocks and predicts whether the next day's closing price will move up or down, built with Streamlit and machine learning. this project piggy backs off the works of the following paper:
 
-[url](https://arxiv.org/abs/1605.00003)
-
-
+[Predicting the direction of stock market prices using random forest
+](https://arxiv.org/abs/1605.00003)
 
 
 ## Features
