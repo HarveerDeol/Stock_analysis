@@ -1,8 +1,8 @@
-# S&P 500 Stock Price Prediction App
+# S&P 500 Stock Price Prediction App 📈
 
 A sophisticated web application that analyzes S&P 500 stocks and predicts whether the next day's closing price will move up or down, built with Streamlit and machine learning.
 
-![Stock Prediction App](https://via.placeholder.com/800x400?text=S%26P+500+Stock+Prediction+App)
+
 
 ## Features
 
