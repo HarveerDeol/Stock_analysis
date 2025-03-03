@@ -83,16 +83,6 @@ The application implements a machine learning pipeline that:
 3. **Prediction Model**: Uses a Random Forest classifier to learn patterns from technical indicators and predict price movements
 4. **Visualization**: Presents data and predictions through interactive charts and metrics
 
-## Project Structure
-
-```
-sp500-stock-prediction/
-├── stock.py          # Main Streamlit application
-├── requirements.txt  # Required Python packages
-├── README.md         # Project documentation
-└── .gitignore        # Git ignore file
-```
-
 ## Future Improvements
 
 - Add more advanced technical indicators
