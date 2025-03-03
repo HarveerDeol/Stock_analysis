@@ -1,6 +1,8 @@
 # S&P 500 Stock Price Prediction App 📈
 
-A sophisticated web application that analyzes S&P 500 stocks and predicts whether the next day's closing price will move up or down, built with Streamlit and machine learning.
+A sophisticated web application that analyzes S&P 500 stocks and predicts whether the next day's closing price will move up or down, built with Streamlit and machine learning. this project piggy backs off the works of the following paper:
+
+
 
 
 
@@ -23,15 +25,16 @@ A sophisticated web application that analyzes S&P 500 stocks and predicts whethe
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/sp500-stock-prediction.git
-cd sp500-stock-prediction
+git clone https://github.com/yourusername/stock_analysis.git
+cd stock_analysis
 
-# Create and activate a virtual environment (optional but recommended)
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
 
 # Install required packages
 pip install -r requirements.txt
+
+# Open the web app
+streamlit run stock.py
 ```
 
 ## Requirements
@@ -53,7 +56,7 @@ scikit-learn
    streamlit run app.py
    ```
 
-2. Access the web application in your browser (typically http://localhost:8501)
+2. Access the web application in your browser 
 
 3. Use the sidebar to:
    - Select stocks from the S&P 500 list
@@ -84,7 +87,7 @@ The application implements a machine learning pipeline that:
 
 ```
 sp500-stock-prediction/
-├── app.py            # Main Streamlit application
+├── stock.py          # Main Streamlit application
 ├── requirements.txt  # Required Python packages
 ├── README.md         # Project documentation
 └── .gitignore        # Git ignore file
