@@ -72,14 +72,6 @@ data = yf.download(
 
 
 
-
-
-
-
-
-
-
-
 # Function to plot stock prices
 
 
@@ -132,6 +124,7 @@ def candle_plot(stock):
 
 def smooth_data(price_data):
     # define the number of days out you want to predict
+    # totally optionally, defaukt number of days is 1
     days_out = 30
 
     # Group by symbol, then apply the rolling function and grab the Min and Max.
@@ -267,12 +260,12 @@ def calc_on_balance_volume(price_data):
 
 
 def price_change(price_data):
-    # Compute price change only for 'close' column
+
     price_data = price_data.dropna()
 
     price_data['Prediction'] = np.sign(price_data['close'].diff())
 
-    # Convert 0s to 1s for binary classification
+
     price_data.loc[price_data['Prediction'] == 0.0, 'Prediction'] = 1.0
 
     price_data = price_data.dropna()
@@ -281,11 +274,10 @@ def price_change(price_data):
 
     return price_data
 
-
-# building the model 
-def split_data(price_data):
-    price_data = candle_plot(price_data)
-    price_data = smooth_data(price_data)
+# Modify your existing split_data function to return more information
+def split_data(stock):
+    price_data = candle_plot(stock)
+    #price_data = smooth_data(price_data) <- this line can be uncommented if we wish to use smoothed data
     price_data = calc_RSI(price_data)
     price_data = calc_stochastic_oscillator(price_data)
     price_data = calc_williams_R(price_data)
@@ -297,46 +289,115 @@ def split_data(price_data):
     X_Cols = price_data[['RSI','k_percent','r_percent','Price_Rate_Of_Change','MACD','On Balance Volume']]
     Y_Cols = price_data['Prediction']
 
-    # Split X and y into X_
+
     X_train, X_test, y_train, y_test = train_test_split(X_Cols, Y_Cols, random_state = 0)
 
-    # Create a Random Forest Classifier
+
     rand_frst_clf = RandomForestClassifier(n_estimators = 100, oob_score = True, criterion = "gini", random_state = 0)
 
-    # Fit the data to the model
+
     rand_frst_clf.fit(X_train, y_train)
 
-    # Make predictions
+
     y_pred = rand_frst_clf.predict(X_test)
-    # Compute accuracy
+    
+
     accuracy = accuracy_score(y_test, rand_frst_clf.predict(X_test), normalize = True) * 100.0
+    
 
-    # Return the accuracy as a string
-    return f'Correct Prediction (%): {accuracy:.2f}'
+    latest_data = X_Cols.iloc[-1:].copy()
+    
+    # Make prediction for the next day
+    next_day_prediction = rand_frst_clf.predict(latest_data)[0]
+    prediction_text = "UP ⬆️" if next_day_prediction > 0 else "DOWN ⬇️"
+    
 
-
-
-
-
-
-
-
-
-
-
+    metrics_fig = plot_metrics(price_data.tail(30))
+    
+    return accuracy, prediction_text, price_data, metrics_fig
 
 
+def plot_metrics(metrics_df):
+    # Select the last 30 days of data for visualization
+    fig, axs = plt.subplots(3, 2, figsize=(14, 12))
+    
 
-# Sidebar slider for number of stocks to plot
+    axs[0, 0].plot(metrics_df['timestamp'], metrics_df['RSI'], color='purple')
+    axs[0, 0].set_title('Relative Strength Index (RSI)')
+    axs[0, 0].axhline(y=70, color='r', linestyle='-', alpha=0.3)
+    axs[0, 0].axhline(y=30, color='g', linestyle='-', alpha=0.3)
+    axs[0, 0].set_ylim(0, 100)
+    
+
+    axs[0, 1].plot(metrics_df['timestamp'], metrics_df['k_percent'], color='blue')
+    axs[0, 1].set_title('Stochastic Oscillator (%K)')
+    axs[0, 1].axhline(y=80, color='r', linestyle='-', alpha=0.3)
+    axs[0, 1].axhline(y=20, color='g', linestyle='-', alpha=0.3)
+    axs[0, 1].set_ylim(0, 100)
+    
+ 
+    axs[1, 0].plot(metrics_df['timestamp'], metrics_df['r_percent'], color='green')
+    axs[1, 0].set_title('Williams %R')
+    axs[1, 0].axhline(y=-20, color='r', linestyle='-', alpha=0.3)
+    axs[1, 0].axhline(y=-80, color='g', linestyle='-', alpha=0.3)
+    axs[1, 0].set_ylim(-100, 0)
+    
+    axs[1, 1].plot(metrics_df['timestamp'], metrics_df['MACD'], color='blue')
+    axs[1, 1].plot(metrics_df['timestamp'], metrics_df['MACD_EMA'], color='red')
+    axs[1, 1].bar(metrics_df['timestamp'], metrics_df['MACD'] - metrics_df['MACD_EMA'], color='green', alpha=0.5)
+    axs[1, 1].set_title('MACD')
+    
+    # Plot Price Rate of Change
+    axs[2, 0].plot(metrics_df['timestamp'], metrics_df['Price_Rate_Of_Change'], color='orange')
+    axs[2, 0].set_title('Price Rate of Change')
+    axs[2, 0].axhline(y=0, color='k', linestyle='-', alpha=0.3)
+    
+    # Plot On Balance Volume
+    axs[2, 1].plot(metrics_df['timestamp'], metrics_df['On Balance Volume'], color='teal')
+    axs[2, 1].set_title('On Balance Volume')
+    
+
+    for ax in axs.flatten():
+        ax.tick_params(axis='x', rotation=45)
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d"))
+    
+    plt.tight_layout()
+    return fig
+
+
+
+
 num_company = st.sidebar.slider('Number of Companies to Plot', 1, len(selected_stocks), 3)
 
+
 if st.button('Show Plots'):
-    st.header('Stock Closing Price')
-    # Initialize the list to store candle data
+    st.header('Stock Analysis and Predictions')
+    
 
-
-    # Iterate over the selected stocks
     for stock in selected_stocks[:num_company]:
-        price_plot(stock)
-        result = split_data(stock)  # Call the function and store the result
-        st.markdown(result)
+        st.subheader(f"Analysis for {stock}")
+        
+    
+        accuracy, prediction, metrics_data, metrics_fig = split_data(stock)
+
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("### Closing Price (5-Year)")
+            price_plot(stock)
+        
+        with col2:
+            st.write("### Prediction Results")
+            st.metric("Next Day Prediction", prediction)
+            st.metric("Model Accuracy", f"{accuracy:.2f}%")
+        
+
+        st.write("### Technical Indicators (Last 30 Days)")
+        st.pyplot(metrics_fig)
+        
+
+        with st.expander("View Technical Indicators Data"):
+            st.dataframe(metrics_data[['timestamp', 'close', 'RSI', 'k_percent', 'r_percent', 'MACD', 'Price_Rate_Of_Change', 'On Balance Volume']].tail(10))
+        
+        st.markdown("---")  
+
